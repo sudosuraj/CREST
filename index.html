@@ -1855,7 +1855,7 @@
             background: linear-gradient(120deg, #ffffff, #f5f7ff);
             box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
             display: grid;
-            grid-template-columns: 1fr auto auto;
+            grid-template-columns: 1fr auto auto auto;
             align-items: center;
             gap: 10px;
             cursor: pointer;
@@ -1898,6 +1898,24 @@
             font-size: 14px;
             color: #6b7280;
             justify-self: end;
+        }
+        
+        .category-reset-btn {
+            background: transparent;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .category-reset-btn:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #dc2626;
         }
 
         .category-questions {
@@ -11636,6 +11654,98 @@ Practice at: https://sudosuraj.github.io/CREST/`;
         location.reload();
     }
     
+    // Reset progress for a specific category
+    function resetCategoryProgress(categoryName) {
+        if (!confirm(`Reset progress for "${categoryName}"? This will clear your answers and flags for this category.`)) {
+            return;
+        }
+        
+        const questions = categorizedQuestions[categoryName];
+        if (!questions) return;
+        
+        let resetCount = 0;
+        
+        questions.forEach(({ key }) => {
+            // Check if this question was answered
+            if (answerState[key]) {
+                // Subtract from score if it was correct
+                if (answerState[key].correct) {
+                    score--;
+                }
+                delete answerState[key];
+                resetCount++;
+            }
+            
+            // Clear flags
+            flaggedQuestions.delete(key);
+            
+            // Reset DOM for this question
+            const container = document.querySelector(`.question-container[data-question-id="${key}"]`);
+            if (!container) return;
+            
+            // Remove status classes
+            container.classList.remove("flagged", "answered-correct", "answered-incorrect");
+            
+            // Reset flag button
+            const flagBtn = container.querySelector(".flag-button");
+            if (flagBtn) {
+                flagBtn.classList.remove("flagged");
+                flagBtn.textContent = "[_] Flag";
+            }
+            
+            // Reset options
+            container.querySelectorAll(".option").forEach(optionDiv => {
+                optionDiv.classList.remove("correct", "incorrect");
+                const input = optionDiv.querySelector("input[type=radio]");
+                if (input) {
+                    input.checked = false;
+                    input.disabled = false;
+                }
+            });
+            
+            // Reset explanation panels
+            const answerExplanation = container.querySelector(".answer-explanation");
+            if (answerExplanation) {
+                answerExplanation.classList.remove("show", "loading", "correct-explanation", "incorrect-explanation");
+                answerExplanation.textContent = "";
+            }
+            
+            // Reset explain answer button
+            const explainBtn = container.querySelector(".ai-button[id^='explain-answer-btn-']");
+            if (explainBtn) {
+                explainBtn.disabled = true;
+                explainBtn.textContent = "[AI] Explain Answer";
+            }
+        });
+        
+        // Update score display
+        if (scoreElement) {
+            scoreElement.textContent = score;
+        }
+        
+        // Update percentage
+        const percentage = totalQuestions > 0 ? ((score / totalQuestions) * 100).toFixed(2) : 0;
+        if (percentageElement) {
+            percentageElement.textContent = percentage;
+        }
+        if (accuracyBar) {
+            accuracyBar.style.width = `${Math.min(parseFloat(percentage), 100)}%`;
+        }
+        
+        // Update attempted count
+        const attemptedEl = document.getElementById('attempted-count');
+        if (attemptedEl) {
+            attemptedEl.textContent = Object.keys(answerState).length;
+        }
+        
+        // Save progress and update UI
+        saveProgress();
+        renderCategoryProgress();
+        updateReviewCounts();
+        
+        showToast(`Reset ${resetCount} question${resetCount === 1 ? '' : 's'} in "${categoryName}"`);
+    }
+    
     // ==================== UPDATE COUNTS ====================
     function updateCounts() {
         const visibleCategories = document.querySelectorAll('.category-section:not([style*="display: none"])').length;
@@ -11882,15 +11992,29 @@ Practice at: https://sudosuraj.github.io/CREST/`;
             const categoryToggle = document.createElement("span");
             categoryToggle.classList.add("category-toggle");
             categoryToggle.textContent = "►";
+            
+            // Category reset button
+            const categoryResetBtn = document.createElement("button");
+            categoryResetBtn.classList.add("category-reset-btn");
+            categoryResetBtn.type = "button";
+            categoryResetBtn.textContent = "Reset";
+            categoryResetBtn.title = "Reset progress for this category";
+            categoryResetBtn.addEventListener("click", (e) => {
+                e.stopPropagation(); // Prevent category toggle
+                resetCategoryProgress(categoryName);
+            });
 
             categoryHeader.appendChild(categoryTitleText);
+            categoryHeader.appendChild(categoryResetBtn);
             categoryHeader.appendChild(categoryCount);
             categoryHeader.appendChild(categoryToggle);
 
             const categoryQuestions = document.createElement("div");
             categoryQuestions.classList.add("category-questions", "collapsed");
 
-            categoryHeader.addEventListener("click", () => {
+            categoryHeader.addEventListener("click", (e) => {
+                // Don't toggle if clicking the reset button
+                if (e.target.classList.contains('category-reset-btn')) return;
                 const collapsed = categoryQuestions.classList.toggle("collapsed");
                 categoryToggle.textContent = collapsed ? "►" : "▼";
             });
@@ -11956,7 +12080,7 @@ Practice at: https://sudosuraj.github.io/CREST/`;
                 const options = [...questionObj.incorrect, questionObj.answer];
                 shuffleArray(options);
 
-                options.forEach(option => {
+                options.forEach((option, optIndex) => {
                     const optionContainer = document.createElement("div");
                     optionContainer.classList.add("option");
 
@@ -11964,9 +12088,21 @@ Practice at: https://sudosuraj.github.io/CREST/`;
                     optionInput.type = "radio";
                     optionInput.name = `question-${key}`;
                     optionInput.value = option;
+                    optionInput.id = `q${key}-opt-${optIndex}`;
 
                     const optionLabel = document.createElement("label");
                     optionLabel.textContent = option;
+                    optionLabel.htmlFor = `q${key}-opt-${optIndex}`;
+
+                    // Make entire option container clickable
+                    optionContainer.addEventListener("click", (event) => {
+                        // Ignore clicks on the radio itself (its own change handler will fire)
+                        if (event.target === optionInput) return;
+                        if (optionInput.disabled) return;
+                        
+                        optionInput.checked = true;
+                        optionInput.dispatchEvent(new Event("change", { bubbles: true }));
+                    });
 
                     optionInput.addEventListener("change", () => {
                         const allOptions = optionsContainer.querySelectorAll("input");
