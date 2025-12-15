@@ -2592,41 +2592,137 @@ Try it yourself: ${url}`,
         const mobileNavToggle = document.getElementById('mobile-nav-toggle');
         const mobileNavDrawer = document.getElementById('mobile-nav-drawer');
         const mobileNavClose = document.getElementById('mobile-nav-close');
-        const mobileToolbarToggle = document.getElementById('mobile-toolbar-toggle');
-        const secondaryPanelRow = document.querySelector('.panel-row.secondary');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const mobileSidebarClose = document.getElementById('mobile-sidebar-close');
 
-        if (mobileNavToggle && mobileNavDrawer && mobileNavClose) {
+        if (mobileNavToggle && mobileSidebar && mobileSidebarClose) {
             mobileNavToggle.addEventListener('click', () => {
-                mobileNavDrawer.classList.add('open');
+                mobileSidebar.classList.add('open');
                 mobileNavToggle.setAttribute('aria-expanded', 'true');
             });
             
-            mobileNavClose.addEventListener('click', () => {
-                mobileNavDrawer.classList.remove('open');
+            mobileSidebarClose.addEventListener('click', () => {
+                mobileSidebar.classList.remove('open');
                 mobileNavToggle.setAttribute('aria-expanded', 'false');
             });
             
-            mobileNavDrawer.addEventListener('click', (e) => {
-                if (e.target === mobileNavDrawer) {
-                    mobileNavDrawer.classList.remove('open');
+            mobileSidebar.addEventListener('click', (e) => {
+                if (e.target === mobileSidebar) {
+                    mobileSidebar.classList.remove('open');
                     mobileNavToggle.setAttribute('aria-expanded', 'false');
                 }
             });
         }
 
-        if (mobileToolbarToggle && secondaryPanelRow) {
-            mobileToolbarToggle.addEventListener('click', () => {
-                const isExpanded = secondaryPanelRow.classList.contains('mobile-expanded');
-                
-                if (isExpanded) {
-                    secondaryPanelRow.classList.remove('mobile-expanded');
-                    mobileToolbarToggle.setAttribute('aria-expanded', 'false');
-                } else {
-                    secondaryPanelRow.classList.add('mobile-expanded');
-                    mobileToolbarToggle.setAttribute('aria-expanded', 'true');
-                }
+        const mobileSearchInput = document.getElementById('mobile-search-input');
+        const mobileFilterSelect = document.getElementById('mobile-filter-select');
+        const desktopSearchInput = document.getElementById('search-input');
+        const desktopFilterSelect = document.getElementById('filter-select');
+
+        if (mobileSearchInput && desktopSearchInput) {
+            mobileSearchInput.addEventListener('input', () => {
+                desktopSearchInput.value = mobileSearchInput.value;
+                applyFilters();
             });
         }
+
+        if (mobileFilterSelect && desktopFilterSelect) {
+            mobileFilterSelect.addEventListener('change', () => {
+                desktopFilterSelect.value = mobileFilterSelect.value;
+                applyFilters();
+            });
+        }
+
+        const mobileStudyMode = document.getElementById('mobile-study-mode');
+        const mobileExamMode = document.getElementById('mobile-exam-mode');
+
+        if (mobileStudyMode) {
+            mobileStudyMode.addEventListener('click', () => {
+                setMode('study');
+                mobileStudyMode.classList.add('active');
+                if (mobileExamMode) mobileExamMode.classList.remove('active');
+            });
+        }
+
+        if (mobileExamMode) {
+            mobileExamMode.addEventListener('click', () => {
+                setMode('exam');
+                mobileExamMode.classList.add('active');
+                if (mobileStudyMode) mobileStudyMode.classList.remove('active');
+            });
+        }
+
+        const mobileStartExam = document.getElementById('mobile-start-exam');
+        const mobileSprintBtn = document.getElementById('mobile-sprint-btn');
+        const mobileReviewIncorrect = document.getElementById('mobile-review-incorrect');
+        const mobileExpandAll = document.getElementById('mobile-expand-all');
+        const mobileCollapseAll = document.getElementById('mobile-collapse-all');
+        const mobileResetProgress = document.getElementById('mobile-reset-progress');
+
+        if (mobileStartExam) {
+            mobileStartExam.addEventListener('click', () => {
+                const examModal = document.getElementById('exam-modal');
+                if (examModal) examModal.classList.add('active');
+                mobileSidebar.classList.remove('open');
+            });
+        }
+
+        if (mobileSprintBtn) {
+            mobileSprintBtn.addEventListener('click', () => {
+                startSprint();
+                mobileSidebar.classList.remove('open');
+            });
+        }
+
+        if (mobileReviewIncorrect) {
+            mobileReviewIncorrect.addEventListener('click', () => {
+                if (desktopFilterSelect) {
+                    desktopFilterSelect.value = 'incorrect';
+                    if (mobileFilterSelect) mobileFilterSelect.value = 'incorrect';
+                    applyFilters();
+                }
+                mobileSidebar.classList.remove('open');
+            });
+        }
+
+        if (mobileExpandAll) {
+            mobileExpandAll.addEventListener('click', () => {
+                expandAllCategories();
+                mobileSidebar.classList.remove('open');
+            });
+        }
+
+        if (mobileCollapseAll) {
+            mobileCollapseAll.addEventListener('click', () => {
+                collapseAllCategories();
+                mobileSidebar.classList.remove('open');
+            });
+        }
+
+        if (mobileResetProgress) {
+            mobileResetProgress.addEventListener('click', () => {
+                resetProgress();
+                mobileSidebar.classList.remove('open');
+            });
+        }
+
+        updateMobileSidebarStats();
+    }
+
+    function updateMobileSidebarStats() {
+        const stats = calculateStats();
+        
+        const mobileScore = document.getElementById('mobile-score');
+        const mobileTotal = document.getElementById('mobile-total');
+        const mobilePercentage = document.getElementById('mobile-percentage');
+        const mobileStreak = document.getElementById('mobile-streak');
+        const mobileAttempted = document.getElementById('mobile-attempted');
+
+        if (mobileScore) mobileScore.textContent = stats.correct;
+        if (mobileTotal) mobileTotal.textContent = stats.total;
+        if (mobilePercentage) mobilePercentage.textContent = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : '0';
+        if (mobileStreak) mobileStreak.textContent = loadStreak().current || 0;
+        if (mobileAttempted) mobileAttempted.textContent = stats.answered;
     }
 
     // ==========================================
@@ -2646,4 +2742,4 @@ Try it yourself: ${url}`,
         setupShareDropdown();
         setupMobileNavigation();
     });
-	
+            
