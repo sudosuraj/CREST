@@ -478,28 +478,6 @@
             background: var(--streak);
         }
         
-        /* Category Progress Overview */
-        .category-progress-overview {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-        }
-        
-        .progress-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0 0 12px 0;
-        }
-        
-        .progress-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-        }
         
         .progress-item {
             display: flex;
@@ -2770,14 +2748,18 @@
             }
 
             .category-title {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr auto;
                 row-gap: 8px;
-                align-items: flex-start;
+                align-items: center;
             }
 
             .category-badge,
             .category-toggle {
                 justify-self: flex-start;
+            }
+            
+            .category-reset-btn {
+                grid-column: 1 / -1;
             }
 
             .chatbot-panel {
@@ -2785,6 +2767,17 @@
                 left: 16px;
                 right: 16px;
                 max-width: calc(100vw - 32px);
+            }
+            
+            #start-sprint-btn,
+            #search-input,
+            #more-actions-btn,
+            .toolbar-footer {
+                display: none !important;
+            }
+            
+            .nav-links {
+                display: none !important;
             }
         }
 
@@ -3227,11 +3220,6 @@
                 </div>
             </div>
             
-            <!-- Category progress overview (shown when not on Progress tab) -->
-            <div class="category-progress-overview" id="category-progress-overview">
-                <h2 class="progress-title">Category Progress</h2>
-                <div class="progress-grid" id="progress-grid"></div>
-            </div>
             
             <!-- Single question navigation (shown in single view mode) -->
             <div class="single-question-nav" id="single-question-nav">
@@ -11926,44 +11914,6 @@ const quizData = {
         });
     }
     
-    // ==================== CATEGORY PROGRESS OVERVIEW ====================
-    function renderCategoryProgress() {
-        const grid = document.getElementById('progress-grid');
-        if (!grid) return;
-        
-        const stats = calculateStats();
-        const categorizedQuestions = {};
-        
-        // Group questions by category
-        Object.entries(quizData).forEach(([id, q]) => {
-            const category = categorizeQuestion(q);
-            if (!categorizedQuestions[category]) {
-                categorizedQuestions[category] = [];
-            }
-            categorizedQuestions[category].push(id);
-        });
-        
-        grid.innerHTML = '';
-        
-        Object.entries(categorizedQuestions).forEach(([category, questions]) => {
-            const catStats = stats.categoryStats[category] || { attempted: 0, correct: 0 };
-            const total = questions.length;
-            const percentage = total > 0 ? Math.round((catStats.correct / total) * 100) : 0;
-            
-            const item = document.createElement('div');
-            item.className = 'progress-item';
-            item.innerHTML = `
-                <div class="progress-item-header">
-                    <span class="progress-item-name" title="${category}">${category}</span>
-                    <span class="progress-item-stats">${catStats.correct}/${total}</span>
-                </div>
-                <div class="progress-item-bar">
-                    <div class="progress-item-fill" style="width: ${percentage}%"></div>
-                </div>
-            `;
-            grid.appendChild(item);
-        });
-    }
     
     // Update progress grid in the Progress panel (tab)
     function updateProgressGridPanel() {
@@ -12013,7 +11963,6 @@ const quizData = {
                     // resetCategoryProgress already has confirmation dialog
                     resetCategoryProgress(cat);
                     updateProgressGridPanel();
-                    renderCategoryProgress();
                 });
             }
             
@@ -12186,7 +12135,6 @@ Practice at: https://sudosuraj.github.io/CREST/`;
         
         // Save progress and update UI
         saveProgress();
-        renderCategoryProgress();
         updateReviewCounts();
         
         showToast(`Reset ${resetCount} question${resetCount === 1 ? '' : 's'} in "${categoryName}"`);
@@ -12595,7 +12543,6 @@ Practice at: https://sudosuraj.github.io/CREST/`;
                         updateStreak();
                         renderStreak();
                         checkAndAwardBadges();
-                        renderCategoryProgress();
                         
                         // Update attempted count
                         const attemptedEl = document.getElementById('attempted-count');
@@ -12796,11 +12743,6 @@ Practice at: https://sudosuraj.github.io/CREST/`;
                     updateProgressGridPanel();
                 }
                 
-                // Hide/show the original category progress overview based on active tab
-                const categoryProgressOverview = document.getElementById('category-progress-overview');
-                if (categoryProgressOverview) {
-                    categoryProgressOverview.style.display = (tabName === 'progress') ? 'none' : '';
-                }
             });
         });
         
@@ -13418,9 +13360,6 @@ Try it yourself: ${url}`,
         
         // Restore UI state from saved progress
         restoreUIState();
-        
-        // Render category progress overview
-        renderCategoryProgress();
         
         // Render streak indicator
         renderStreak();
