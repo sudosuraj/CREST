@@ -2590,26 +2590,61 @@ Try it yourself: ${url}`,
     // ==========================================
     function setupMobileNavigation() {
         const mobileNavToggle = document.getElementById('mobile-nav-toggle');
-        const mobileNavDrawer = document.getElementById('mobile-nav-drawer');
-        const mobileNavClose = document.getElementById('mobile-nav-close');
         const mobileSidebar = document.getElementById('mobile-sidebar');
         const mobileSidebarClose = document.getElementById('mobile-sidebar-close');
 
         if (mobileNavToggle && mobileSidebar && mobileSidebarClose) {
-            mobileNavToggle.addEventListener('click', () => {
+            const openSidebar = () => {
                 mobileSidebar.classList.add('open');
                 mobileNavToggle.setAttribute('aria-expanded', 'true');
-            });
+                document.body.style.overflow = 'hidden';
+                
+                const mainContent = document.querySelector('.app-shell');
+                if (mainContent) mainContent.setAttribute('aria-hidden', 'true');
+                
+                const firstFocusable = mobileSidebar.querySelector('button, input, select, [tabindex]:not([tabindex="-1"])');
+                if (firstFocusable) firstFocusable.focus();
+            };
             
-            mobileSidebarClose.addEventListener('click', () => {
+            const closeSidebar = () => {
                 mobileSidebar.classList.remove('open');
                 mobileNavToggle.setAttribute('aria-expanded', 'false');
-            });
+                document.body.style.overflow = '';
+                
+                const mainContent = document.querySelector('.app-shell');
+                if (mainContent) mainContent.removeAttribute('aria-hidden');
+                
+                mobileNavToggle.focus();
+            };
+            
+            mobileNavToggle.addEventListener('click', openSidebar);
+            mobileSidebarClose.addEventListener('click', closeSidebar);
             
             mobileSidebar.addEventListener('click', (e) => {
                 if (e.target === mobileSidebar) {
-                    mobileSidebar.classList.remove('open');
-                    mobileNavToggle.setAttribute('aria-expanded', 'false');
+                    closeSidebar();
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && mobileSidebar.classList.contains('open')) {
+                    closeSidebar();
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab' && mobileSidebar.classList.contains('open')) {
+                    const focusableElements = mobileSidebar.querySelectorAll('button, input, select, [tabindex]:not([tabindex="-1"])');
+                    const firstFocusable = focusableElements[0];
+                    const lastFocusable = focusableElements[focusableElements.length - 1];
+                    
+                    if (e.shiftKey && document.activeElement === firstFocusable) {
+                        e.preventDefault();
+                        lastFocusable.focus();
+                    } else if (!e.shiftKey && document.activeElement === lastFocusable) {
+                        e.preventDefault();
+                        firstFocusable.focus();
+                    }
                 }
             });
         }
@@ -2624,12 +2659,20 @@ Try it yourself: ${url}`,
                 desktopSearchInput.value = mobileSearchInput.value;
                 applyFilters();
             });
+            
+            desktopSearchInput.addEventListener('input', () => {
+                mobileSearchInput.value = desktopSearchInput.value;
+            });
         }
 
         if (mobileFilterSelect && desktopFilterSelect) {
             mobileFilterSelect.addEventListener('change', () => {
                 desktopFilterSelect.value = mobileFilterSelect.value;
                 applyFilters();
+            });
+            
+            desktopFilterSelect.addEventListener('change', () => {
+                mobileFilterSelect.value = desktopFilterSelect.value;
             });
         }
 
@@ -2711,6 +2754,8 @@ Try it yourself: ${url}`,
 
     function updateMobileSidebarStats() {
         const stats = calculateStats();
+        const totalQuestions = Object.keys(quizData).length;
+        const streak = loadStreak();
         
         const mobileScore = document.getElementById('mobile-score');
         const mobileTotal = document.getElementById('mobile-total');
@@ -2719,10 +2764,10 @@ Try it yourself: ${url}`,
         const mobileAttempted = document.getElementById('mobile-attempted');
 
         if (mobileScore) mobileScore.textContent = stats.correct;
-        if (mobileTotal) mobileTotal.textContent = stats.total;
-        if (mobilePercentage) mobilePercentage.textContent = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : '0';
-        if (mobileStreak) mobileStreak.textContent = loadStreak().current || 0;
-        if (mobileAttempted) mobileAttempted.textContent = stats.answered;
+        if (mobileTotal) mobileTotal.textContent = totalQuestions;
+        if (mobilePercentage) mobilePercentage.textContent = stats.attempted > 0 ? Math.round((stats.correct / stats.attempted) * 100) : '0';
+        if (mobileStreak) mobileStreak.textContent = streak.count || 0;
+        if (mobileAttempted) mobileAttempted.textContent = stats.attempted;
     }
 
     // ==========================================
