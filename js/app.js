@@ -1014,6 +1014,7 @@ Practice at: https://sudosuraj.github.io/CREST/`;
                         updateStreak();
                         renderStreak();
                         checkAndAwardBadges();
+                        updateMobileSidebarStats();
                         
                         // Update attempted count
                         const attemptedEl = document.getElementById('attempted-count');
@@ -2588,6 +2589,8 @@ Try it yourself: ${url}`,
     // ==========================================
     // MOBILE NAVIGATION SETUP
     // ==========================================
+    let closeMobileSidebar = null;
+
     function setupMobileNavigation() {
         const mobileNavToggle = document.getElementById('mobile-nav-toggle');
         const mobileSidebar = document.getElementById('mobile-sidebar');
@@ -2617,6 +2620,8 @@ Try it yourself: ${url}`,
                 mobileNavToggle.focus();
             };
             
+            closeMobileSidebar = closeSidebar;
+            
             mobileNavToggle.addEventListener('click', openSidebar);
             mobileSidebarClose.addEventListener('click', closeSidebar);
             
@@ -2627,13 +2632,14 @@ Try it yourself: ${url}`,
             });
             
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && mobileSidebar.classList.contains('open')) {
+                if (!mobileSidebar.classList.contains('open')) return;
+                
+                if (e.key === 'Escape') {
                     closeSidebar();
+                    return;
                 }
-            });
-            
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Tab' && mobileSidebar.classList.contains('open')) {
+                
+                if (e.key === 'Tab') {
                     const focusableElements = mobileSidebar.querySelectorAll('button, input, select, [tabindex]:not([tabindex="-1"])');
                     const firstFocusable = focusableElements[0];
                     const lastFocusable = focusableElements[focusableElements.length - 1];
@@ -2706,14 +2712,14 @@ Try it yourself: ${url}`,
             mobileStartExam.addEventListener('click', () => {
                 const examModal = document.getElementById('exam-modal');
                 if (examModal) examModal.classList.add('active');
-                mobileSidebar.classList.remove('open');
+                if (closeMobileSidebar) closeMobileSidebar();
             });
         }
 
         if (mobileSprintBtn) {
             mobileSprintBtn.addEventListener('click', () => {
                 startSprint();
-                mobileSidebar.classList.remove('open');
+                if (closeMobileSidebar) closeMobileSidebar();
             });
         }
 
@@ -2724,28 +2730,28 @@ Try it yourself: ${url}`,
                     if (mobileFilterSelect) mobileFilterSelect.value = 'incorrect';
                     applyFilters();
                 }
-                mobileSidebar.classList.remove('open');
+                if (closeMobileSidebar) closeMobileSidebar();
             });
         }
 
         if (mobileExpandAll) {
             mobileExpandAll.addEventListener('click', () => {
                 expandAllCategories();
-                mobileSidebar.classList.remove('open');
+                if (closeMobileSidebar) closeMobileSidebar();
             });
         }
 
         if (mobileCollapseAll) {
             mobileCollapseAll.addEventListener('click', () => {
                 collapseAllCategories();
-                mobileSidebar.classList.remove('open');
+                if (closeMobileSidebar) closeMobileSidebar();
             });
         }
 
         if (mobileResetProgress) {
             mobileResetProgress.addEventListener('click', () => {
                 resetProgress();
-                mobileSidebar.classList.remove('open');
+                if (closeMobileSidebar) closeMobileSidebar();
             });
         }
 
