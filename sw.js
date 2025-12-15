@@ -1,7 +1,10 @@
-const CACHE_NAME = 'cpsa-quiz-v5';
+const CACHE_NAME = 'cpsa-quiz-v6';
 const urlsToCache = [
     '/CREST/',
     '/CREST/index.html',
+    '/CREST/styles/main.css',
+    '/CREST/js/app.js',
+    '/CREST/js/quiz-data.js',
     '/CREST/manifest.json',
     '/CREST/icon-192.svg',
     '/CREST/icon-512.svg',
