@@ -851,6 +851,8 @@ Practice at: https://sudosuraj.github.io/CREST/`;
         });
 
         Object.keys(categorizedQuestions).sort().forEach(categoryName => {
+            // Shuffle questions within each category
+            shuffleArray(categorizedQuestions[categoryName]);
             const count = categorizedQuestions[categoryName].length;
 
             const categorySection = document.createElement("div");
@@ -1081,6 +1083,17 @@ Practice at: https://sudosuraj.github.io/CREST/`;
         if (questionCountChip) {
             questionCountChip.textContent = `Questions: ${totalQuestions}`;
         }
+    }
+
+    function reshuffleQuiz() {
+        const quizContainer = document.getElementById("quiz-container");
+        if (quizContainer) {
+            quizContainer.innerHTML = '';
+        }
+        loadQuiz();
+        restoreUIState();
+        applyFilters();
+        showToast('Questions shuffled!');
     }
 
     function expandAllCategories() {
@@ -2604,10 +2617,17 @@ Try it yourself: ${url}`,
     // ==========================================
     function setupSprintMode() {
         const sprintBtn = document.getElementById('start-sprint-btn');
+        const shuffleBtn = document.getElementById('shuffle-questions-btn');
         
         if (sprintBtn) {
             sprintBtn.addEventListener('click', () => {
                 startSprint(600); // 10 minutes
+            });
+        }
+        
+        if (shuffleBtn) {
+            shuffleBtn.addEventListener('click', () => {
+                reshuffleQuiz();
             });
         }
     }
@@ -2729,6 +2749,7 @@ Try it yourself: ${url}`,
 
         const mobileStartExam = document.getElementById('mobile-start-exam');
         const mobileSprintBtn = document.getElementById('mobile-sprint-btn');
+        const mobileShuffleBtn = document.getElementById('mobile-shuffle-btn');
         const mobileReviewIncorrect = document.getElementById('mobile-review-incorrect');
         const mobileExpandAll = document.getElementById('mobile-expand-all');
         const mobileCollapseAll = document.getElementById('mobile-collapse-all');
@@ -2745,6 +2766,13 @@ Try it yourself: ${url}`,
         if (mobileSprintBtn) {
             mobileSprintBtn.addEventListener('click', () => {
                 startSprint();
+                if (closeMobileSidebar) closeMobileSidebar();
+            });
+        }
+
+        if (mobileShuffleBtn) {
+            mobileShuffleBtn.addEventListener('click', () => {
+                reshuffleQuiz();
                 if (closeMobileSidebar) closeMobileSidebar();
             });
         }
